@@ -1,0 +1,8 @@
+LIBRARY desktop_driver.dll
+EXPORTS
+	start_driver @ 1
+	get_rect_list @ 2
+	stop_driver @ 3
+	
+	
+
