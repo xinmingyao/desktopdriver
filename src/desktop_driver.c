@@ -135,7 +135,7 @@ struct driver_rect_list * get_rect_list(struct desktop_driver * driver,int posit
     region = CreateRectRgnIndirect(driver->driver_buf.buffer->pointrect+position);
     position++;
     while(position < snapshot){
-        int pos  =  driver->driver_buf.buffer->pointrect+position/MAXCHANGES_BUF; //mod ringbuffer
+        int pos  =  driver->driver_buf.buffer->pointrect+position%MAXCHANGES_BUF; //mod ringbuffer
         tmp = CreateRectRgnIndirect(driver->driver_buf.buffer->pointrect+pos);
         if (CombineRgn(region, region, tmp, RGN_OR) == NULLREGION)
              goto error;
