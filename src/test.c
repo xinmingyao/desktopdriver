@@ -3,19 +3,19 @@
 #include "desktop_driver.h"
 int main(int argc, const char *argv[])
 {
-    struct desktop_driver * driver = start_driver();
-    if(driver == NULL){
-        printf("start driver error\n");
-        exit(0);
-    }
+    struct desktop_driver * driver = alloc_driver();
+    int r = start_driver(driver);
+	if(r!=0){
+		printf("start driver error: %d \n",r);
+	}
     struct driver_rect_list * list = get_rect_list(driver,0);
     assert(list);
     printf("position:%d\n", list->position);
 
     struct driver_rect_list * list1 = get_rect_list(driver,0);
     assert(list1->position > list->position);
-    stop_driver(driver);
-    free(list);
-    free(list1);
+    stop_free_driver(driver);
+    free_rect_list(list);
+    free_rect_list(list1);
     return 0;
 }

@@ -35,9 +35,10 @@ struct driver_rect_list {
     struct driver_rect  * head;
     struct driver_rect  *tail;
 };
-struct desktop_driver * start_driver();
-int stop_driver(struct desktop_driver * driver);
-int get_current_count(struct desktop_driver * driver_recter);
+struct desktop_driver *  alloc_driver();
+int start_driver(struct desktop_driver *);
+int stop_free_driver(struct desktop_driver * driver);
 struct driver_rect_list * get_rect_list(struct desktop_driver * driver,int position);
+int free_rect_list(struct driver_rect_list * );
 
 

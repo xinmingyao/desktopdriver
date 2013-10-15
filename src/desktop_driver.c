@@ -1,7 +1,7 @@
 #include  "desktop_driver.h"
 #include <stdio.h>
 static HKEY  CreateDeviceKey(LPCTSTR name);
-static int stop_driver_(struct desktop_driver * driver);
+static int stop_driver(struct desktop_driver * driver);
 //static  int  map_dirver_buffer(struct GETCHANGESBUF * buf);
 static HKEY
 CreateDeviceKey(LPCTSTR szMpName){
@@ -21,10 +21,22 @@ CreateDeviceKey(LPCTSTR szMpName){
     RegCloseKey(hKeyProfileMp);
     return hKeyDevice;
 }
-struct desktop_driver * start_driver(){
-    struct desktop_driver * driver = malloc(sizeof(*driver));
+struct desktop_driver * alloc_driver(){
+	struct desktop_driver * driver = malloc(sizeof(*driver));
+	if(driver == NULL){
+		return NULL;
+	}
     ZeroMemory(&driver->display_dev, sizeof(DISPLAY_DEVICE));
     driver->display_dev.cb = sizeof(DISPLAY_DEVICE);
+	return driver;
+}
+
+void free_driver(struct desktop_driver * driver){
+	if(driver)
+		free(driver);
+}
+
+int start_driver(struct desktop_driver * driver){
     BOOL result;
     int num =0;
     while (result=EnumDisplayDevicesA(NULL,num,&driver->display_dev, 0)){
@@ -35,7 +47,7 @@ struct desktop_driver * start_driver(){
         num++;
     }
     if(result == 0){
-        return NULL;
+        return -1;
     }
 	
 	HDC gdc1= CreateDC(driver->display_dev.DeviceName, NULL, NULL, NULL);
@@ -67,22 +79,22 @@ struct desktop_driver * start_driver(){
     devmode.dmDeviceName[0] = '\0';
     HKEY hKeyDevice = CreateDeviceKey(MINI_PORT_NAME);
     if (hKeyDevice == NULL)
-        return NULL;
+        return -1;
     // TightVNC does not use these features
     RegDeleteValue(hKeyDevice, ("Screen.ForcedBpp"));
     RegDeleteValue(hKeyDevice, ("Pointer.Enabled"));
     DWORD dwVal = 3;
     // NOTE that old driver ignores it and mapping is always ON with it
     if (RegSetValueEx(hKeyDevice,("Cap.DfbBackingMode"),0,REG_DWORD,(unsigned char *)&dwVal,4) != ERROR_SUCCESS){
-        return NULL;
+        return -1;
     }
     dwVal = 1;
     if (RegSetValueEx(hKeyDevice,("Order.BltCopyBits.Enabled"),0,REG_DWORD,(unsigned char *)&dwVal,4) != ERROR_SUCCESS){
-        return NULL;
+        return -1;
     }
     dwVal = 1;
     if (RegSetValueEx(hKeyDevice,("Attach.ToMyDesktop"),0,REG_DWORD,(unsigned char *)&dwVal,4) != ERROR_SUCCESS){
-        return NULL;
+        return -1;
     }
     HDESK   hdeskInput;
     HDESK   hdeskCurrent;
@@ -122,10 +134,9 @@ struct desktop_driver * start_driver(){
     if (drvCr <= 0){
         goto error;
     }
-    return driver;
+    return 0;
 error:
-    free(driver);
-    return NULL;
+    return -1;
 }
 
 
@@ -192,13 +203,23 @@ error:
     return NULL;
 }
 
+int free_rect_list(struct driver_rect_list * list){
+	if(list){
+		struct  driver_rect  * desk;
+		while(desk = list->head){
+			list->head = desk->next;
+			free(desk);
+		}
+		free(list);
+	}
 
-int stop_driver(struct desktop_driver * driver){
-	stop_driver_(driver);
-	free(driver);
+}
+int stop_free_driver(struct desktop_driver * driver){
+	stop_driver(driver);
+	free_driver(driver);
 }
 static 
-int stop_driver_(struct desktop_driver * driver){
+int stop_driver(struct desktop_driver * driver){
     DEVMODE devmode;
     FillMemory(&devmode, sizeof(DEVMODE), 0);
     devmode.dmSize = sizeof(DEVMODE);
