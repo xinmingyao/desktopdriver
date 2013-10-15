@@ -1,13 +1,17 @@
 SRC=\
 src/desktop_driver.c
 
+TEST=src/desktop_driver.c\
+src/test.c
 
 all : clean win
 
 win : desktop_driver.dll dlllib
 
 
-
+test.exe: $(TEST)
+	gcc -g -Wall  -o $@ $^  -lGdi32
+	
 desktop_driver.dll : $(SRC)
 	gcc -g -Wall -D_GUI --shared -o $@ $^  -lGdi32
 
